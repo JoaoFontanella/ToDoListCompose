@@ -44,9 +44,9 @@ import br.edu.satc.todolistcompose.ui.components.TaskCard
 import kotlinx.coroutines.launch
 
 
-@Preview(showBackground = true)
+
 @Composable
-fun HomeScreen() {
+fun HomeScreen(Tasks: List<TaskData>, onNewTaskCreated: (task: TaskData) -> Unit) {
 
     // states by remember
     // Guardam valores importantes de controle em nossa home
@@ -110,6 +110,7 @@ fun HomeScreen() {
                 icon = { Icon(Icons.Filled.Add, contentDescription = "") },
                 onClick = {
                     showBottomSheet = true
+
                 }
             )
         }
@@ -119,19 +120,22 @@ fun HomeScreen() {
          * O que aparece no "meio".
          * Para ficar mais organizado, montei o conteúdo em functions separadas.
          * */
-        HomeContent(innerPadding)
-        NewTask(showBottomSheet = showBottomSheet) { showBottomSheet = false }
+        HomeContent(innerPadding, Tasks)
+        NewTask(showBottomSheet = showBottomSheet) {
+            showBottomSheet = false
+            if (it != null){
+                onNewTaskCreated(it)
+            }
+        }
 
     }
 }
 
 @Composable
-fun HomeContent(innerPadding: PaddingValues) {
+fun HomeContent(innerPadding: PaddingValues, Tasks: List<TaskData>) {
 
     val tasks = mutableListOf<TaskData>()
-    for (i in 0..5) {
-        tasks.add(TaskData("Tarefa " + i, "Descricao " + i, i % 2 == 0))
-    }
+
 
     /**
      * Aqui simplesmente temos uma Column com o nosso conteúdo.
@@ -162,7 +166,7 @@ fun HomeContent(innerPadding: PaddingValues) {
  * Aqui podemos "cadastrar uma nova Task".
  */
 @Composable
-fun NewTask(showBottomSheet: Boolean, onComplete: () -> Unit) {
+fun NewTask(showBottomSheet: Boolean, onComplete: (task: TaskData?) -> Unit) {
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
     var taskTitle by remember {
@@ -175,7 +179,7 @@ fun NewTask(showBottomSheet: Boolean, onComplete: () -> Unit) {
     if (showBottomSheet) {
         ModalBottomSheet(
             onDismissRequest = {
-                onComplete()
+                onComplete(null)
             },
             sheetState = sheetState,
 
@@ -199,7 +203,8 @@ fun NewTask(showBottomSheet: Boolean, onComplete: () -> Unit) {
                 Button(modifier = Modifier.padding(top = 4.dp), onClick = {
                     scope.launch { sheetState.hide() }.invokeOnCompletion {
                         if (!sheetState.isVisible) {
-                            onComplete()
+                            val td = TaskData(uid = 0, taskTitle, taskDescription, false)
+                            onComplete(td)
                         }
                     }
                 }) {
